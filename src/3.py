@@ -7,25 +7,42 @@ if __name__ == "__main__":
     with open(f"{CURRENT_FILE_NAME}.txt", "r") as f:
         inp = f.readlines()
 
-    safe_counter = 0
-    for line in inp:
-        diffs = []
-        prev = None
-        mode = None
+    concat_lines = "".join(inp)
 
-        is_safe = None
+    so_far = ""
+    wait_for = None
+    substr = ""
+    val = 0
+    enabled = True
+    for idx, chara in enumerate(concat_lines):
+        if so_far.endswith("do()"):
+            enabled = True
+        elif so_far.endswith("don't()"):
+            enabled = False
 
-        for idx, c in enumerate(line.split()):
-            if idx != 0:
-                diffs.append(int(c) - prev)
-            prev = int(c)
+        if wait_for is None and so_far.endswith("mul"):
+            wait_for = ")"  
+        elif wait_for:
+            if chara == ")":
+                parts = substr.split(",")
+                if len(parts) > 1:
+                    x = parts[0]
+                    y = parts[1]
 
-        is_safe = len([d for d in diffs if d in [1, 2, 3]]) == len(diffs) or len(
-            [d for d in diffs if -1 * d in [1, 2, 3]]
-        ) == len(diffs)
+                    # print("x", x)
+                    # print("y", y)
+                    if enabled:
+                        val += int(x) * int(y)
 
-        if is_safe:
-            print(diffs)
-            safe_counter += 1
+                wait_for = None
 
-    print(safe_counter)
+                substr = ""
+            elif chara == "," or chara.isdigit():
+                substr += chara
+            else:
+                substr = ""
+                wait_for = None
+
+        so_far += chara
+
+    print(val)
