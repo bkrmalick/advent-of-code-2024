@@ -10,11 +10,13 @@ BLOCK = "#"
 visited = {}
 
 
-def _walk_until_blocked(grid: list) -> tuple[list, int]:
-    print("BEFORE\n", "\n".join(["".join(row) for row in grid]))
+def _walk_until_blocked(grid: list) -> tuple[list, int, bool]:
+    print("BEFORE")
+    str_repr = "\n".join(["".join(row) for row in grid])
+    print(str_repr)
 
     dimension = len(grid)
-    
+
     new_grid = grid.copy()
     steps_taken = 0
 
@@ -27,23 +29,12 @@ def _walk_until_blocked(grid: list) -> tuple[list, int]:
             if cell in [UP, RIGHT, DOWN, LEFT]:
                 pos_x = x
                 pos_y = y
+                visited.update({(y, x): True})
                 break
-    
-    try: 
-        assert pos_x is not None and pos_y is not None, "No position found"
-    except AssertionError as e:
-        # print grid
-        # print("\n".join(["".join(row) for row in grid]))
-        raise
 
-    # if (
-    #     pos_x == 0
-    #     or pos_x == dimension - 1
-    #     or pos_y == 0
-    #     or pos_y == dimension - 1
-    # ):  
-    #     print("FINAL POS", pos_x, pos_y)
-    #     return new_grid, steps_taken
+    assert pos_x is not None and pos_y is not None, "No position found"
+
+    reached_edge = False
 
     if grid[pos_y][pos_x] == UP:
         print("UP")
@@ -54,14 +45,19 @@ def _walk_until_blocked(grid: list) -> tuple[list, int]:
             start = start - 1
 
             if start < 0:
+                steps_taken = pos_y - start
+
                 new_grid[pos_y][pos_x] = "."
 
                 new_grid[start + 1][pos_x] = UP
-                return new_grid, 0
+
+                reached_edge = True
+
+                break
             elif grid[start][pos_x] == BLOCK:
                 steps_taken = pos_y - start
                 new_grid[pos_y][pos_x] = "."
-                
+
                 new_grid[start + 1][pos_x] = RIGHT
                 # print("AUP\n", "\n".join(["".join(row) for row in new_grid]))
                 break
@@ -74,10 +70,14 @@ def _walk_until_blocked(grid: list) -> tuple[list, int]:
         while True:
             start = start + 1
             if start == dimension:
+                steps_taken = start - pos_y
+
                 new_grid[pos_y][pos_x] = "."
 
                 new_grid[start - 1][pos_x] = DOWN
-                return new_grid, 0
+                reached_edge = True
+
+                break
             elif grid[start][pos_x] == BLOCK:
                 steps_taken = start - pos_y
                 new_grid[pos_y][pos_x] = "."
@@ -93,10 +93,14 @@ def _walk_until_blocked(grid: list) -> tuple[list, int]:
         while True:
             start = start + 1
             if start == dimension:
+                steps_taken = start - pos_x
+
                 new_grid[pos_y][pos_x] = "."
 
                 new_grid[pos_y][start - 1] = RIGHT
-                return new_grid, 0
+                reached_edge = True
+
+                break
             elif grid[pos_y][start] == BLOCK:
                 steps_taken = start - pos_x
 
@@ -109,22 +113,23 @@ def _walk_until_blocked(grid: list) -> tuple[list, int]:
 
     elif grid[pos_y][pos_x] == LEFT:
         print("LEFT")
-        # print("BLEFT\n", "\n".join(["".join(row) for row in new_grid]))
-
         start = pos_x
         while True:
             start = start - 1
             if start < 0:
+                steps_taken = pos_x - start
+
                 new_grid[pos_y][pos_x] = "."
 
                 new_grid[pos_y][start + 1] = LEFT
-                return new_grid, 0
+                reached_edge = True
+
+                break
             elif grid[pos_y][start] == BLOCK:
                 steps_taken = pos_x - start
                 new_grid[pos_y][pos_x] = "."
 
                 new_grid[pos_y][start + 1] = UP
-                # print("ALEFT\n", "\n".join(["".join(row) for row in new_grid]))
 
                 break
             else:
@@ -132,15 +137,10 @@ def _walk_until_blocked(grid: list) -> tuple[list, int]:
     else:
         raise Exception("invalid char")
 
-    print("AFTER1\n", "\n".join(["".join(row) for row in new_grid]))
+    str_repr = "\n".join(["".join(row) for row in new_grid])
+    print(str_repr)
 
-
-    # if steps_taken != 0:
-    #     new_grid[pos_y][pos_x] = "."
-
-    print("AFTER2\n", "\n".join(["".join(row) for row in new_grid]))
-
-    return new_grid, steps_taken
+    return new_grid, steps_taken, reached_edge
 
 
 if __name__ == "__main__":
@@ -160,23 +160,17 @@ if __name__ == "__main__":
     while True:
         print(total_steps)
 
-        grid, steps_taken = _walk_until_blocked(grid)
-        total_steps += steps_taken+1
-        if steps_taken == 0:
+        grid, steps_taken, end = _walk_until_blocked(grid)
+        total_steps += steps_taken + 1
+        if end:
             break
 
-    # print(total_steps)
-
-    
     # print X wherever visited
     for key in visited.keys():
         if grid[key[0]][key[1]] not in [UP, RIGHT, DOWN, LEFT]:
             grid[key[0]][key[1]] = "X"
 
+    print("\n\n")
     print("\n".join(["".join(row) for row in grid]))
 
-    print(
-    "Total visited unique cells: ",
-    len(visited))
-
-    
+    print("Total visited unique cells: ", len(visited))
